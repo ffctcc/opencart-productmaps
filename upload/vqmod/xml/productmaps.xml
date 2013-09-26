@@ -1,0 +1,436 @@
+<modification>
+	<id>ProductMaps</id>
+	<version>1.2</version>
+	<vqmver>1.0.8</vqmver>
+	<author>http://ffct.cc</author>
+
+	<!--			  -->
+	<!--  admin part  -->
+	<!--			  -->
+
+	<file name="admin/view/template/catalog/product_form.tpl">
+		<operation>
+			<search position="before"><![CDATA[
+			    <div id="tab-design">
+			]]></search>
+			<add><![CDATA[
+				<div id="tab-productmaps">
+
+					<style type="text/css">
+						#pmMapTable  {
+							table-layout: fixed;
+						}
+
+						#pmMapTable > tbody > tr > td:first-child {
+							width: 150px;
+						}
+					</style>
+
+					<table class="form" id="pmMapTable">    
+					  <tr>
+					  	<td><?php echo $text_size; ?></td>
+					  	<td>
+					  		<input type="text" id="pmWidth" name="pmWidth" size="4" value="<?php echo isset($pmLocations[0]['width']) ? $pmLocations[0]['width'] : ''; ?>" />
+							x
+							<input type="text" id="pmHeight" name="pmHeight" size="4" value="<?php echo isset($pmLocations[0]['height']) ? $pmLocations[0]['height'] : ''; ?>" /> &nbsp;&nbsp;&nbsp;
+							x
+					  		<select id="pmZoom" name="pmZoom">
+					  			<?php for($i = 0; $i <= 21; $i++){ ?>
+					  			<option value="<?php echo $i;?>" <?php echo (isset($pmLocations[0]['zoom']) && $i == $pmLocations[0]['zoom']) ? "selected='selected'" : ""; ?>><?php echo $i;?></option>
+					  			<?php } ?>	
+					  		</select>
+					  	</td>
+					  </tr>
+
+					  <tr>
+						<td><?php echo $text_address; ?></td>
+						<td>
+							<input type="text" id="pmAddress" name="pmAddress" size="100" value="<?php echo isset($pmLocations[0]['address']) ? $pmLocations[0]['address'] : ''; ?>" /> 
+						</td>
+					  </tr>
+      
+					  <tr>
+					  	<td><?php echo $text_coords; ?></td>
+					  	<td>
+					  		<input type="text" id="pmLat" name="pmLat" value="<?php echo isset($pmLocations[0]['lat']) ? $pmLocations[0]['lat'] : ''; ?>" /> 
+							 x 
+					  		<input type="text" id="pmLng" name="pmLng" value="<?php echo isset($pmLocations[0]['lng']) ? $pmLocations[0]['lng'] : ''; ?>" />
+							<a id="pmGetCoords" class="button"><span><?php echo $button_update_preview; ?></span></a>
+							<a id="pmClearDelete" class="button"><span><?php echo $button_clear_delete; ?></span></a>
+					  	</td>
+					  </tr>
+
+					  <tr>
+					  	<td><?php echo $text_preview; ?></td>
+					  	<td>
+					  		<img id="pmPreview" src="" style="display:none;" />
+					  	</td>
+					  </tr>
+					</table>
+
+					<script src="http://maps.google.com/maps/api/js?sensor=false"></script>
+					<script type="text/javascript">
+						$(function() {
+							$('#pmClearDelete').click(function(){
+								$("#pmMapTable input").val('');
+								$('#pmPreview').attr('src','');
+							});
+
+							$('#pmGetCoords').click(function(){
+								$('.warning').remove();
+								if(parseInt($('#pmWidth').val()) == 0 || parseInt($('#pmHeight').val()) == 0
+									|| isNaN(parseInt($('#pmWidth').val())) || isNaN(parseInt($('#pmHeight').val())))
+								{
+									$('.box').before('<div class="warning"><?php echo $error_size; ?></div>');
+									$('#pmWidth').focus() ;
+								}
+								else if($('#pmAddress').val() == "")
+								{
+									if($('#pmLat').val() == "" || $('#pmLng').val() == "") {
+										$('.box').before('<div class="warning"><?php echo $error_address; ?></div>');
+										$('#pmAddress').focus() ;
+									} else {
+										var geocoder = new google.maps.Geocoder();
+										var latlng = new google.maps.LatLng($('#pmLat').val(),$('#pmLng').val());
+										if (geocoder) {
+											geocoder.geocode({ 'latLng': latlng }, function (results, status) {
+												if (status == google.maps.GeocoderStatus.OK) {
+													$('#pmAddress').val(results[0].formatted_address);
+													$('#pmPreview').attr('src', 'http://maps.google.com/maps/api/staticmap?center=' + results[0].geometry.location + '&zoom=' + $('#pmZoom').val() + '&markers=' + results[0].formatted_address + '&size=' + $('#pmWidth').val() +'x' + $('#pmHeight').val() +'&maptype=roadmap' + '&sensor=true').css('display', 'block');
+												}
+												else 
+												{
+													$('.box').before('<div class="warning">Geocoding failed: ' + status + '</div>');
+												}
+										  	});
+							   			}
+									}
+								}
+								else
+								{
+									var geocoder = new google.maps.Geocoder();
+								   	var address = $('#pmAddress').val();
+									if (geocoder) {
+										geocoder.geocode({ 'address': address }, function (results, status) {
+											if (status == google.maps.GeocoderStatus.OK) {
+												$('#pmLat').val(results[0].geometry.location.lat());
+												$('#pmLng').val(results[0].geometry.location.lng());
+												$('#pmPreview').attr('src', 'http://maps.google.com/maps/api/staticmap?center=' + results[0].geometry.location + '&zoom=' + $('#pmZoom').val() + '&markers=' + $('#pmAddress').val() + '&size=' + $('#pmWidth').val() +'x' + $('#pmHeight').val() +'&maptype=roadmap' + '&sensor=true').css('display', 'block');
+											}
+											else 
+											{
+												$('.box').before('<div class="warning">Geocoding failed: ' + status + '</div>');
+											}
+									  	});
+						   			} 
+								}
+							});
+
+							<?php
+							if (isset($pmLocations[0]['address'])) {
+								echo "$('#pmGetCoords').click();";
+							}
+							?>
+						});
+					</script>
+				</div>
+			]]></add>
+		</operation>
+		
+		<operation>
+			<search position="replace"><![CDATA[
+			    <div id="tabs" class="htabs"><a href="#tab-general"><?php echo $tab_general; ?></a><a href="#tab-data"><?php echo $tab_data; ?></a><a href="#tab-links"><?php echo $tab_links; ?></a><a href="#tab-attribute"><?php echo $tab_attribute; ?></a><a href="#tab-option"><?php echo $tab_option; ?></a><a href="#tab-discount"><?php echo $tab_discount; ?></a><a href="#tab-special"><?php echo $tab_special; ?></a><a href="#tab-image"><?php echo $tab_image; ?></a><a href="#tab-reward"><?php echo $tab_reward; ?></a><a href="#tab-design"><?php echo $tab_design; ?></a></div>
+			]]></search>
+			<add><![CDATA[
+				<div id="tabs" class="htabs"><a href="#tab-general"><?php echo $tab_general; ?></a><a href="#tab-data"><?php echo $tab_data; ?></a><a href="#tab-links"><?php echo $tab_links; ?></a><a href="#tab-attribute"><?php echo $tab_attribute; ?></a><a href="#tab-option"><?php echo $tab_option; ?></a><a href="#tab-discount"><?php echo $tab_discount; ?></a><a href="#tab-special"><?php echo $tab_special; ?></a><a href="#tab-image"><?php echo $tab_image; ?></a><a href="#tab-reward"><?php echo $tab_reward; ?></a><a href="#tab-design"><?php echo $tab_design; ?></a><a href="#tab-productmaps"><?php echo $tab_productmaps; ?></a></div>
+			]]></add>
+		</operation>		
+	</file>		
+
+	<file name="admin/controller/catalog/product.php">
+		<operation>
+			<search position="after"><![CDATA[
+				$this->data['tab_design'] = $this->language->get('tab_design');
+			]]></search>
+			<add><![CDATA[
+				$text_strings = array(
+						'tab_productmaps',
+
+						'text_size', 'text_coords', 'text_address', 'text_zoom', 'text_preview',
+
+						'error_size', 'error_address',
+
+						'button_update_preview', 'button_clear_delete',
+				);
+		
+				foreach ($text_strings as $text) {
+					$this->data[$text] = $this->language->get($text);
+				}			
+			]]></add>
+		</operation>
+
+		<operation>
+			<search position="after"><![CDATA[
+				$this->data['layouts'] = $this->model_design_layout->getLayouts();
+			]]></search>
+			<add><![CDATA[
+				$this->load->model('module/productmaps');
+				if (isset($this->request->get['product_id']))
+					$this->data['pmLocations'] = $this->model_module_productmaps->getLocations($this->request->get['product_id']);
+			]]></add>
+		</operation>
+
+	</file>
+
+	<file name="admin/language/english/english.php">
+		<operation>
+			<search position="after"><![CDATA[
+				$_['tab_voucher_history']     = 'Voucher History';
+			]]></search>
+			<add><![CDATA[
+				$_['tab_productmaps']     = 'Map';
+
+				$_['text_size'] = 'Width x Height x Zoom';
+				$_['text_coords'] = 'Latitude x Longitude';
+				$_['text_address'] = 'Address';
+
+				$_['button_update_preview'] = 'Update / Preview';
+				$_['button_clear_delete'] = 'Clear / Delete';
+
+				$_['error_size'] = 'Please specify a valid map size in pixels';
+				$_['error_address'] = 'Address or coordinates required';
+
+				$_['text_latitude'] = 'Latitude';
+				$_['text_longitude'] = 'Longitude';
+				$_['text_zoom'] = 'Zoom';
+				$_['text_address'] = 'Address';
+				$_['text_width'] = 'Width';
+				$_['text_height'] = 'Height';
+				$_['text_preview'] = 'Preview';
+				$_['text_save'] = 'Save';
+				$_['text_delete'] = 'Delete';
+				$_['text_no_locations'] = 'No locations added yet';
+				$_['text_add_location'] = 'Add new location';
+				$_['text_locations'] = 'Locations';
+
+			]]></add>
+		</operation>
+	</file>
+
+	<file name="admin/model/catalog/product.php">
+		<operation>
+			<search position="after" offset="2"><![CDATA[
+				public function editProduct($product_id, $data) {
+			]]></search>
+			<add><![CDATA[
+				if (($this->db->escape($data["pmLat"]) == '') || ($this->db->escape($data["pmLng"]) == '') || ($this->db->escape($data["pmAddress"]) == '')) {
+		        $this->db->query('DELETE FROM `' . DB_PREFIX . 'productmaps`
+				WHERE id_product = ' . (int)$product_id);
+				} else {
+		        $this->db->query('
+			REPLACE INTO `' . DB_PREFIX . 'productmaps`
+				(p,zoom,address,width,height,id_product)
+			VALUES (
+				PointFromText("POINT(' . $this->db->escape($data["pmLat"]) . ' ' . $this->db->escape($data["pmLng"]) . ')"),
+				' . $data["pmZoom"] . ',
+				"' . $this->db->escape($data["pmAddress"]) . '",
+ 				' . $data["pmWidth"] . ',
+				' . $data["pmHeight"] . ',
+				' . (int)$product_id . ')');
+				}
+			]]></add>
+		</operation>
+
+		<operation>
+			<search position="after"><![CDATA[
+				public function deleteProduct($product_id) {
+			]]></search>
+			<add><![CDATA[
+		        $this->db->query('DELETE FROM `' . DB_PREFIX . 'productmaps`
+				WHERE id_product = ' . (int)$product_id);
+			]]></add>
+		</operation>
+	</file>
+
+	<!--			  -->
+	<!-- catalog part -->
+	<!--			  -->
+
+	<file name="catalog/controller/product/product.php">
+		<operation>
+			<search position="after" offset="1"><![CDATA[
+				$this->data['reviews'] = sprintf($this->language->get('text_reviews'), (int)$product_info['reviews']);
+			]]></search>
+			<add><![CDATA[
+			    $sql = 'SELECT id, x(p) as lat, y(p) as lng, zoom, address, width, height FROM `' . DB_PREFIX . 'productmaps` g WHERE id_product='.$this->request->get['product_id'];
+	
+				if ($res = $this->db->query($sql)) {
+					$this->data['pmLocations'] = $res->rows;
+				}
+			]]></add>
+		</operation>
+	</file>
+
+	<file name="catalog/view/theme/default/template/product/product.tpl">
+		<operation>
+			<search position="after" offset="1"><![CDATA[
+			    <a href="#tab-related"><?php echo $tab_related; ?> (<?php echo count($products); ?>)</a>
+			]]></search>
+			<add><![CDATA[
+				<?php if (isset($pmLocations) && !empty($pmLocations)) { ?>
+  			    <a href="#tab-maps" id="tab-maps-load"><?php echo $tab_maps ?></a>
+				<?php } ?>
+			]]></add>
+		</operation>
+		
+		<operation>
+			<search position="before" offset="1"><![CDATA[
+			  <div id="tab-related" class="tab-content">
+			]]></search>
+			<add><![CDATA[
+				<?php if (isset($pmLocations) && !empty($pmLocations)) { ?>
+  				<div id="tab-maps" class="tab-content">
+					<style>
+						#pmFrom {
+							display: block;
+							width: 90%;
+							margin: 0 auto;
+						}
+
+						#pmDirectionsBtn {
+							display: block;
+							margin: 10px auto;
+						}
+
+						#pmDirWarning {
+							display: block;
+							margin: 5px auto;
+							width: 81%;
+						}
+
+						#pmDirDiv {
+							display: inline;
+							width: 60%;
+							float: left;
+						}
+
+						#pmMapDiv {
+							display: inline;
+							width: 40%;
+							float: left;
+						}
+					</style>
+
+					<?php 
+						echo "<div id='pmDirDiv'>";
+						echo "<input id='pmTo' value='{$pmLocations[0]['address']}' type='hidden' />";
+						echo "<input id='pmFrom' value='Chinatown, New York' type='text' />";
+						echo "<input id='pmDirectionsBtn' type='button' value='$button_get_directions'>";
+						echo "<div id='pmDirectionsList'></div>";
+						echo "</div>";
+						echo "<div id='pmMapDiv'>";
+						echo "<div style='margin: 0 auto; width:{$pmLocations[0]['width']}px; height:{$pmLocations[0]['height']}px;' id=\"pmMap{$pmLocations[0]['id']}\"></div>";
+						echo "</div>";
+					?>
+
+					<script src="http://maps.google.com/maps/api/js?sensor=false" type="text/javascript"></script>
+
+					<script type="text/javascript">
+						$(function() {
+							function createMap(e,lat,lng,zoom,width,height) {
+						        var gmLatlng = new google.maps.LatLng(lat, lng);
+						        var gmOpt = {
+						            zoom: zoom,
+						            center: gmLatlng,
+						            mapTypeId: google.maps.MapTypeId.ROADMAP
+						        }
+						        var map = new google.maps.Map(document.getElementById(e), gmOpt);
+						        var marker = new google.maps.Marker({
+						            position: gmLatlng,
+						            map: map,
+						            draggable:true
+						        });
+
+								return map;
+							}
+
+
+							function generateRoute(map) {
+								$("#pmDirWarning").remove();
+								$("#pmDirectionsList").empty();
+								var directionsService = new google.maps.DirectionsService();
+								var directionsDisplay = new google.maps.DirectionsRenderer();
+
+								var start = document.getElementById("pmFrom").value;
+								var end = document.getElementById("pmTo").value;
+
+								var request = {
+									origin:start,
+									destination:end,
+									travelMode: google.maps.TravelMode.DRIVING
+								};
+
+								directionsService.route(request, function(result, status) {
+									if (status == google.maps.DirectionsStatus.OK) {
+										directionsDisplay.setMap(map);
+										directionsDisplay.setPanel(document.getElementById("pmDirectionsList"));
+									  	directionsDisplay.setDirections(result);
+									} else if (status == google.maps.DirectionsStatus.ZERO_RESULTS) { 
+										$("#pmFrom").before('<div class="warning" id="pmDirWarning"><?php echo $error_route_not_found; ?></div>');
+									} else if (status == google.maps.DirectionsStatus.NOT_FOUND) { 
+										$("#pmFrom").before('<div class="warning" id="pmDirWarning"><?php echo $error_address_not_found; ?></div>');
+									} else {
+										$("#pmFrom").before('<div class="warning" id="pmDirWarning">' + status + '</div>');
+									}
+								});
+							}
+
+							$('#pmDirectionsBtn').bind('click', function(event, ui) {
+							<?php 
+									echo "var map = createMap('pmMap{$pmLocations[0]['id']}', {$pmLocations[0]['lat']}, {$pmLocations[0]['lng']}, {$pmLocations[0]['zoom']}, {$pmLocations[0]['width']}, {$pmLocations[0]['height']});";
+							?>
+								generateRoute(map);
+							});
+
+							$('#tab-maps-load').bind('click', function(event, ui) {
+							<?php 
+									echo "createMap('pmMap{$pmLocations[0]['id']}', {$pmLocations[0]['lat']}, {$pmLocations[0]['lng']}, {$pmLocations[0]['zoom']}, {$pmLocations[0]['width']}, {$pmLocations[0]['height']});";
+							?>
+							});
+
+						});
+					</script>
+				</div>
+				<?php } ?>
+			]]></add>
+		</operation>
+	</file>
+	
+	<file name="catalog/controller/product/product.php">
+		<operation>
+			<search position="before"><![CDATA[
+			    $this->data['tab_related'] = $this->language->get('tab_related');
+			]]></search>
+			<add><![CDATA[
+				$this->data['tab_maps'] = $this->language->get('tab_maps');
+				$this->data['button_get_directions'] = $this->language->get('button_get_directions');
+				$this->data['error_address_not_found'] = $this->language->get('error_address_not_found');
+				$this->data['error_route_not_found'] = $this->language->get('error_route_not_found');
+			]]></add>
+		</operation>
+	</file>	
+	
+	<file name="catalog/language/english/product/product.php">
+		<operation>
+			<search position="before"><![CDATA[
+			    $_['tab_description']   = 'Description';
+			]]></search>
+			<add><![CDATA[
+				$_['tab_maps']       = 'Map';
+				$_['button_get_directions']       = 'Get Directions!';
+				$_['error_address_not_found']       = 'Address not found.';
+				$_['error_route_not_found']       = 'No route found.';
+			]]></add>
+		</operation>
+	</file>		
+ </modification>

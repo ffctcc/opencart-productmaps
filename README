@@ -1,0 +1,40 @@
+Description:
+----------------------------------
+	This module makes it possible to add a map to a product. It creates a separate tab on
+	product edit page where a location can be added. This adds a tab called "Map" to the
+	product page as well as a "Directions" button. Customers can check the map and enter
+	their address to get directions to the location shown on map. Map size and zoom level
+	can be configured via backend.
+
+
+Installation:
+----------------------------------
+	1. If you don't have vQmod installed, install it first. vQmod is 
+	   _required_ for this module to work. You can get it at http://vqmod.com/
+	   It needs to be installed and functional. 
+ 
+	2. Copy the files and folders from the upload/ directory to your OpenCart installation.
+
+    3. Install the module via Backend -> Extensions -> Modules -> Product Maps.
+	
+	   NOTE: This step is mandatory since it creates the table that holds maps.
+
+
+If you are using a custom theme:
+----------------------------------
+	1. Modify the line in file vqmod/xml/productmaps.xml that 
+		<file name="catalog/view/theme/default/template/product/product.tpl">
+	   and replace "default" with your theme's folder name, e.g.
+		<file name="catalog/view/theme/YOURTHEME/template/product/product.tpl">
+
+	2. This extension may not work with heavily modified custom themes out of the box 
+	   since it relies on specific lines of code found in the default theme. If those
+	   are removed in your theme, extension will not work out of the box. If it's your
+	   case, contact me and I'll do my best to help you.
+
+Usage:
+----------------------------------
+    1. Add Google Maps location via Edit Product -> Map screen in backend.
+
+    2. Map and directions button will appear on product screen in a separate tab.
+
